@@ -15,7 +15,7 @@ const taskSchema = mongoose.Schema(
       enum: ["pending", "working", "review", "done", "archive"],
       default: "pending",
     },
-    asignee: {
+    assignee: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
     },

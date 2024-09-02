@@ -1,6 +1,7 @@
+require("dotenv").config();
+console.log(process.env.MONGODB_URI);
 const { sendResponse, AppError } = require("./helpers/utils.js");
 
-require("dotenv").config();
 const cors = require("cors");
 
 var express = require("express");
@@ -20,9 +21,7 @@ app.use(express.static(path.join(__dirname, "public")));
 app.use(cors());
 
 const mongoose = require("mongoose");
-const mongoURI =
-  process.env.MONGODB_URI ||
-  "mongodb+srv://chitrungluongcv:IjoaGX9f8HPNtumj@codermanagement.ixn63xt.mongodb.net/";
+const mongoURI = process.env.MONGODB_URI || "mongodb+srv://chitrungluongcv:IjoaGX9f8HPNtumj@codermanagement.ixn63xt.mongodb.net/";
 
 mongoose
   .connect(mongoURI)

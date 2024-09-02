@@ -32,7 +32,7 @@ router.post("/", createUser);
  * @access public
  * @params name
  */
-router.get("/:name", searchUser);
+router.get("/search", searchUser);
 
 //Get User's Task
 /**

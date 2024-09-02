@@ -25,7 +25,7 @@ userController.createUser = async (req, res, next) => {
 
 //Get All Users
 userController.getUsers = async (req, res, next) => {
-  const allowedFilter = ["name", "task", "role"];
+  const allowedFilter = ["name", "tasks", "role", "search"];
   let newFilter = {};
 
   try {
@@ -38,11 +38,15 @@ userController.getUsers = async (req, res, next) => {
       if (checkedFilter.length === 0) {
         throw new AppError(402, "Bad Request", "Invalid Query");
       }
-      let replacedFilters = Object.keys(query).map((key) => {
-        const newKey = checkedFilter[key] || key;
-        return { [newKey]: query[key] };
-      });
-      newFilter = replacedFilters.reduce((a, b) => Object.assign({}, a, b));
+      if (query.search) {
+        newFilter.name = { $regex: new RegExp(query.search, 'i') };
+      } else {
+        let replacedFilters = Object.keys(query).map((key) => {
+          const newKey = checkedFilter[key] || key;
+          return { [newKey]: query[key] };
+        });
+        newFilter = replacedFilters.reduce((a, b) => Object.assign({}, a, b));
+      }
     }
     const listOfFound = await User.find(newFilter);
     if (listOfFound.length === 0) {
@@ -63,9 +67,16 @@ userController.getUsers = async (req, res, next) => {
 
 //Search user by his/her name
 userController.searchUser = async (req, res, next) => {
-  const name = req.params.name;
+  const name = req.query.search;
+  // const name = req.params.name;
   try {
-    const found = await User.find({ name: name });
+    if (!name) {
+      throw new AppError(402, "Bad Request", "Name parameter is missing");
+    }
+    const foundUsers = await User.find({ name: { $regex: new RegExp(name, 'i') } });
+    if (foundUsers.length === 0) {
+      return sendResponse(res, 200, true, [], null, "No users found with the provided name");
+    }
     sendResponse(
       res,
       200,
@@ -85,14 +96,15 @@ userController.getUserTask = async (req, res, next) => {
     if (!mongoose.Types.ObjectId.isValid(id)) {
       throw new AppError(420, "Bad Request", "Invalid ID");
     }
-    const found = await User.findById(id).populate("task");
+    const found = await User.findById(id).populate("tasks");
+    const tasks = found.tasks.length > 0 ? found.tasks : [];
     sendResponse(
       res,
       200,
       true,
       { tasks: found.task || "no task" },
       null,
-      "Get User Task Successfully!"
+      "Get User Tasks Successfully!"
     );
   } catch (error) {
     next(error);

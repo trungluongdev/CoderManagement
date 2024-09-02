@@ -5,7 +5,7 @@ const { User } = require("../models/Task.js");
 
 /* GET home page. */
 router.get("/", function (req, res, next) {
-  res.status(200).send("Welcome to CoderSchool!");
+  res.status(200).send("success");
 });
 
 router.get("/template/:test", async (req, res, next) => {

@@ -17,11 +17,11 @@ taskController.createTask = async (req, res, next) => {
     }
     const created = await Task.create(info);
     let callUser;
-    if (info.asignee) {
-      const getUser = await User.findById(info.asignee);
+    if (info.assignee) {
+      const getUser = await User.findById(info.assignee);
       const taskUpdate = [...getUser?.task, created._id];
       callUser = await User.findByIdAndUpdate(
-        info.asignee,
+        info.assignee,
         {
           task: taskUpdate,
         },
@@ -44,25 +44,17 @@ taskController.createTask = async (req, res, next) => {
 taskController.getTask = async (req, res, next) => {
   const allowedFilter = ["name", "status", "status"];
   let newFilter = {};
-  const isDeleted = { isDeleting: false };
+  const isDeleting = { isDeleting: false };
   let sort = {};
   try {
     const query = req.query;
-    if (query.sortByCreatedDay || query.sortByUpdatedDay) {
-      if (query.sortByCreatedDay === "1") {
-        sort = { createdAt: 1 };
-      }
-      if (query.sortByCreatedDay === "-1") {
-        sort = { createdAt: -1 };
-      }
-      if (query.sortByUpdatedDay === "1") {
-        sort = { updatedAt: 1 };
-      }
-      if (query.sortByUpdatedDay === "-1") {
-        sort = { updatedAt: -1 };
-      }
-      delete query.sortByCreatedDay;
-      delete query.sortByUpdatedDay;
+    if (query.createdAt) {
+      sort.createdAt = query.createdAt === "1" ? 1 : -1;
+      delete query.createdAt;
+    }
+    if (query.updatedAt) {
+      sort.updatedAt = query.updatedAt === "1" ? 1 : -1;
+      delete query.updatedAt;
     }
     if (Object.keys(query).length > 0) {
       var checkFilter = Object.keys(query);
@@ -78,10 +70,10 @@ taskController.getTask = async (req, res, next) => {
       });
       newFilter = replacedFilters.reduce((a, b) => Object.assign({}, a, b));
     }
-    const filteredField = Object.assign(newFilter, isDeleted);
+    const filteredField = Object.assign(newFilter, isDeleting);
     const listOfFound = await Task.find(filteredField)
       .sort(sort)
-      .populate("asignee");
+      .populate("assignee");
     if (listOfFound.length === 0) {
       sendResponse(res, 200, true, null, "Couldn't find task ");
     }
@@ -91,7 +83,7 @@ taskController.getTask = async (req, res, next) => {
       true,
       { task: listOfFound },
       null,
-      "Get User List Successfully!"
+      "Get task List Successfully!"
     );
   } catch (error) {
     next(error);
@@ -142,20 +134,20 @@ taskController.assignTask = async (req, res, next) => {
       { task: taskList },
       options
     );
-    const checkTaskAsignee = await Task.findById(taskId);
+    const checkTaskAssignee = await Task.findById(taskId);
     if (
-      checkTaskAsignee.asignee !== _id &&
-      checkTaskAsignee.asignee !== "none"
+      checkTaskAssignee.assignee !== _id &&
+      checkTaskAssignee.assignee !== "none"
     ) {
       const deleteTaskInOldUser = await User.findByIdAndUpdate(
-        checkTaskAsignee.asignee,
+        checkTaskAssignee.assignee,
         { task: [] },
         options
       );
     }
     const updateInTask = await Task.findByIdAndUpdate(
       taskId,
-      { asignee: _id, status: "working" },
+      { assignee: _id, status: "working" },
       options
     );
     sendResponse(
